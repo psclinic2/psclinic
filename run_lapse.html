@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" manifest="cache.appcache">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PSCLINIC - System Environment</title>
+<style>
+    html, body {
+        background-color: #080a0f;
+        background-image: radial-gradient(circle at center, #111827 0%, #080a0f 100%);
+        color: #e2e8f0;
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    /* الهيدر واللوجو الأنيق */
+    #header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    #header img {
+        width: 240px;
+        height: auto;
+        margin-bottom: 8px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+    #header .phones {
+        font-size: 15px;
+        color: #38bdf8;
+        letter-spacing: 1.5px;
+        font-weight: 700;
+    }
+
+    #wrap { 
+        width: 100%;
+        max-width: 540px; 
+        background: rgba(17, 24, 39, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+    }
+    
+    /* تصميم شريط التقدم العصري */
+    #progress-container {
+        width: 100%;
+        background-color: rgba(2, 6, 23, 0.9);
+        border-radius: 8px;
+        margin-bottom: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    #progress-bar {
+        width: 0%;
+        height: 26px;
+        background: linear-gradient(90deg, #0284c7, #38bdf8);
+        text-align: center;
+        color: #0f172a;
+        line-height: 26px;
+        font-weight: 800;
+        font-size: 12px;
+        transition: width 0.3s ease;
+    }
+
+    #state { 
+        font-size: 16px; 
+        font-weight: 700; 
+        margin-bottom: 12px; 
+        color: #38bdf8; 
+        text-align: center;
+    }
+    
+    #out { 
+        white-space: pre-wrap; 
+        font: 11px/1.45 Consolas, monospace;
+        background: #020617; 
+        border: 1px solid rgba(56, 189, 248, 0.1); 
+        border-radius: 8px;
+        padding: 12px; 
+        height: 150px; 
+        overflow-y: auto; 
+        color: #94a3b8;
+    }
+
+    .ok { color: #4ade80; } 
+    .bad { color: #f87171; } 
+    .warn { color: #fbbf24; }
+</style>
+</head>
+<body>
+
+<!-- شعار المحل والهواتف الجديدة -->
+<div id="header">
+    <img src="IFIXSTORE.png" alt="PSCLINIC IFIXSTORE">
+    <div class="phones">01095496805 - 01094035620</div>
+</div>
+
+<div id="wrap">
+  <!-- شريط التقدم -->
+  <div id="progress-container">
+    <div id="progress-bar">0%</div>
+  </div>
+
+  <div id="state">Initializing PSCLINIC environment...</div>
+  <div id="out"></div>
+</div>
+
+<script>
+    function setProgress(percent, text) {
+        var bar = document.getElementById("progress-bar");
+        if (bar) {
+            var p = Math.min(Math.max(percent, 0), 100);
+            bar.style.width = p + "%";
+            bar.textContent = p + "%" + (text ? " - " + text : "");
+        }
+    }
+
+    const observer = new MutationObserver(function(mutations) {
+        var stateText = document.getElementById("state").textContent.toLowerCase();
+        var outText = document.getElementById("out").innerText.toLowerCase();
+
+        if (outText.includes("all done") || outText.includes("chain=complete") || stateText.includes("done") || stateText.includes("success")) {
+            setProgress(100, "Completed successfully!");
+        } else if (stateText.includes("exploit") || stateText.includes("trigger") || outText.includes("kernel")) {
+            setProgress(75, "Triggering Exploit...");
+        } else if (stateText.includes("spray") || outText.includes("spray") || outText.includes("socket")) {
+            setProgress(40, "Memory Spraying...");
+        } else if (stateText.includes("initializing") || stateText.includes("loading")) {
+            setProgress(20, "Initializing...");
+        }
+    });
+
+    window.addEventListener("DOMContentLoaded", function() {
+        var targetNode = document.getElementById("state");
+        if (targetNode) {
+            observer.observe(targetNode, { childList: true, characterData: true, subtree: true });
+        }
+        var outNode = document.getElementById("out");
+        if (outNode) {
+            observer.observe(outNode, { childList: true, characterData: true, subtree: true });
+        }
+        setProgress(10, "Starting...");
+    });
+</script>
+
+<script type="module" src="chain_lapse.js"></script>
+</body>
+</html>

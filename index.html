@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" manifest="cache.appcache">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PSCLINIC - System Utility</title>
+<style>
+    html, body {
+        background-color: #080a0f;
+        background-image: radial-gradient(circle at center, #111827 0%, #080a0f 100%);
+        color: #e2e8f0;
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    /* هيدر الصفحة والاسم الاحترافي */
+    #header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    #header h1 {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #38bdf8;
+        margin: 0 0 5px 0;
+        text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    #header .subtitle {
+        font-size: 14px;
+        color: #94a3b8;
+        letter-spacing: 1px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    #wrap { 
+        width: 100%;
+        max-width: 520px; 
+        background: rgba(17, 24, 39, 0.75);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+    }
+    
+    /* تصميم شريط التقدم العصري */
+    #progress-container {
+        width: 100%;
+        background-color: rgba(2, 6, 23, 0.9);
+        border-radius: 8px;
+        margin-bottom: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    #progress-bar {
+        width: 0%;
+        height: 26px;
+        background: linear-gradient(90deg, #0284c7, #38bdf8);
+        text-align: center;
+        color: #0f172a;
+        line-height: 26px;
+        font-weight: 800;
+        font-size: 12px;
+        transition: width 0.3s ease;
+    }
+
+    #state { 
+        font-size: 16px; 
+        font-weight: 700; 
+        margin-bottom: 12px; 
+        color: #38bdf8; 
+        text-align: center;
+    }
+
+    #det {
+        font-size: 13px;
+        color: #94a3b8;
+        text-align: center;
+        background: rgba(2, 6, 23, 0.5);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    #cache {
+        margin-top: 10px;
+        font-size: 12px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .ok { color: #4ade80; } 
+    .bad { color: #f87171; } 
+    .warn { color: #fbbf24; }
+</style>
+</head>
+<body>
+
+<div id="header">
+    <h1>PSCLINIC</h1>
+    <div class="subtitle">System Environment Utility</div>
+</div>
+
+<div id="wrap">
+  <!-- شريط التقدم -->
+  <div id="progress-container">
+    <div id="progress-bar">0%</div>
+  </div>
+
+  <div id="state">Detecting system environment...</div>
+  <div id="det"></div>
+  <div id="cache"></div>
+</div>
+
+<script>
+(function () {
+    var stateEl = document.getElementById("state");
+    var detEl = document.getElementById("det");
+    var cacheEl = document.getElementById("cache");
+    var progressBar = document.getElementById("progress-bar");
+
+    function updateProgress(percent, text) {
+        if (progressBar) {
+            var p = Math.min(Math.max(percent, 0), 100);
+            progressBar.style.width = p + "%";
+            progressBar.textContent = p + "%" + (text ? " - " + text : "");
+        }
+    }
+
+    function setState(t, c) { stateEl.textContent = t; stateEl.className = c || ""; }
+    function setCache(t, ok) { cacheEl.textContent = t; cacheEl.className = ok ? "cacheok" : ""; }
+    
+    var params = new URLSearchParams(location.search);
+    updateProgress(10, "Checking firmware");
+
+    var key = null, fwnum = null;
+    var m = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
+    if (m) {
+        var minor = parseInt(m[2], 16);
+        var ms = minor.toString(16);
+        if (ms.length < 2) ms = "0" + ms;
+        key = m[1] + "." + ms;
+        fwnum = parseInt(m[1], 10) * 100 + parseInt(ms, 10);
+    }
+    
+    updateProgress(25, "Analyzing system");
+
+    var bug = null, why = "";
+    var forced = params.get("bug");
+    if (forced === "lapse" || forced === "poops") {
+        bug = forced; why = "forced via ?bug=" + forced;
+    } else if (!key) {
+        why = "user-agent is not a PlayStation 4";
+    } else if (fwnum <= 1202) {
+        bug = "lapse"; why = key + " <= 12.02";
+    } else if (fwnum >= 1250) {
+        bug = "poops"; why = key + " >= 12.50";
+    } else {
+        why = key + " -- no working bug";
+    }
+    
+    detEl.innerHTML = "Firmware <b>" + (key || "Unknown") + "</b>"
+        + " &middot; Module <b>" + (bug || "None") + "</b>";
+
+    if (!bug) { 
+        updateProgress(100, "Unsupported");
+        setState("UNSUPPORTED SYSTEM VERSION", "bad"); 
+        return; 
+    }
+
+    var target = (bug === "lapse" ? "run_lapse.html" : "run_poops.html") + location.search;
+    
+    function go() { 
+        updateProgress(100, "Ready");
+        setState("Initializing " + bug + " environment...", "warn");
+        setTimeout(function() {
+            location.replace(target);
+        }, 400);
+    }
+
+    function waitForTap(msg, action) {
+        setState(msg, "warn");
+        function fire() {
+            window.removeEventListener("click", fire);
+            window.removeEventListener("keydown", fire);
+            action();
+        }
+        window.addEventListener("click", fire);
+        window.addEventListener("keydown", fire);
+    }
+
+    var ac = window.applicationCache;
+    if (!ac || !document.documentElement.hasAttribute("manifest")) {
+        updateProgress(60, "Loading components");
+        go();
+    } else if (!navigator.onLine) {
+        setCache("Offline mode active", true);
+        updateProgress(100, "Loaded offline");
+        go();
+    } else if (clusterStatusIdle(ac)) {
+        checkIdleState(ac);
+    }
+
+    function checkIdleState(ac) {
+        if (ac.status === ac.IDLE) {
+            setCache("System cached successfully", true);
+            updateProgress(100, "Ready");
+            go();
+        } else if (ac.status === ac.UPDATEREADY) {
+            try { ac.swapCache(); } catch (e) {}
+            setCache("Update downloaded", true);
+            updateProgress(100, "Update ready");
+            waitForTap("UPDATE READY -- Press X or tap to reload", function () { location.reload(); });
+        } else {
+            setCache("Verifying cache state...");
+            updateProgress(40, "Checking cache");
+        }
+    }
+
+    if (ac) {
+        ac.addEventListener("downloading", function () { 
+            setCache("Caching files for offline use..."); 
+            updateProgress(50, "Downloading");
+        }, false);
+        
+        ac.addEventListener("progress", function (e) {
+            if (e && e.total && e.total > 0) {
+                var p = Math.round((e.loaded / e.total) * 50) + 50;
+                setCache("Caching " + Math.round((e.loaded / e.total) * 100) + "%");
+                updateProgress(p, "Caching");
+            } else {
+                updateProgress(70, "Caching");
+            }
+        }, false);
+
+        ac.addEventListener("cached", function () {
+            setCache("Cached for offline use", true);
+            updateProgress(100, "Complete");
+            waitForTap("CACHED -- Press X or tap to launch", go);
+        }, false);
+        
+        ac.addEventListener("updateready", function () {
+            try { ac.swapCache(); } catch (e) {}
+            setCache("Update downloaded", true);
+            updateProgress(100, "Update ready");
+            waitForTap("UPDATE READY -- Press X or tap to reload", function () { location.reload(); });
+        }, false);
+
+        ac.addEventListener("noupdate", function () {
+            setCache("Offline ready", true);
+            updateProgress(100, "Ready");
+            go();
+        }, false);
+        
+        ac.addEventListener("error", function () {
+            setCache("Cache service unavailable");
+            updateProgress(100, "Bypassed");
+            waitForTap("CACHE NOTICE -- Press X or tap to proceed", go);
+        }, false);
+        
+        ac.addEventListener("obsolete", function () {
+            setCache("Cache obsolete");
+            updateProgress(100, "Obsolete");
+            waitForTap("OBSOLETE -- Press X or tap to proceed", go);
+        }, false);
+    }
+
+    function clusterStatusIdle(ac) {
+        if(ac.status === ac.IDLE) {
+            setCache("Cached", true);
+            updateProgress(100, "Ready");
+            go();
+            return false;
+        }
+        return true;
+    }
+})();
+</script>
+</body>
+</html>
